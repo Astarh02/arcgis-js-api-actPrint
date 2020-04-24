@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'>
+
+        <title>Print Task</title>
+
+        <style>
+            html,
+            body,
+            #viewDiv {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+            #loader {
+                background-image: url(loader.svg);
+                background-position: center;
+                background-repeat: no-repeat;
+                display: none;
+                position: absolute;
+                height: 100%;
+                width: 100%;
+                top: 0px;
+                left: 0px;
+                z-index: 2;
+            }
+            #open {
+                display: block;
+                position: absolute;
+                right: 10px;
+                top: 10px;
+            }
+            #xml {
+                display: block;
+                position: absolute;
+                right: 10px;
+                top: 40px;
+            }
+        </style>
+        <script>
+        var locationPath = location.pathname.replace(/\/[^\/]+$/, '');
+        window.dojoConfig = {
+            packages: [
+            {
+                name: 'widgets',
+                location: locationPath + '/widgets'
+            }
+            ]
+        };
+        </script>
+        <link rel="stylesheet" href="widgets/CircuitCreation/CircuitCreation.css">
+        <link rel="stylesheet" href="widgets/PrintWidget.css">
+        <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/css/main.css">
+        <script src='https://js.arcgis.com/4.14/'></script>
+        <script>
+            require([
+                'esri/Map',
+                'esri/views/MapView',
+                "esri/Basemap",
+                "esri/layers/TileLayer",
+                "esri/layers/MapImageLayer",
+                "esri/tasks/PrintTask",
+                "esri/tasks/support/PrintParameters",
+                "esri/tasks/support/PrintTemplate",
+                "esri/widgets/LayerList",
+                "esri/config",
+
+                "widgets/PrintWidget",
+                'dojo/domReady!'
+            ], function(
+                Map,
+                MapView,
+                Basemap,
+                TileLayer,
+                MapImageLayer,
+                PrintTask,
+                PrintParameters,
+                PrintTemplate,
+                LayerList,
+                esriConfig,
+
+                PrintWidget,
+            ) {
+                esriConfig.request.trustedServers.push("http://atlas.mvs.int");
+                
+                var EGKO = new TileLayer({ url: "http://atlas.mvs.int/gate/rest/services/basemaps/egko2019/MapServer" });
+
+                var EGKO_BaseMap = new Basemap({
+                    baseLayers: [EGKO],
+                    title: "ЕГКО",
+                    id: "EGKO",
+                });
+
+                var map = new Map({ basemap: EGKO_BaseMap });
+                var baseUrl = "http://atlas.mvs.int";
+
+                var operationlayers = 
+                    [
+                        // {id:'setimvs', url: baseUrl + '/gate/rest/services/seti/setimvs/MapServer/', visible: true, title:'ГУП Мосводосток эксплуатируемые'},
+                        //{id:'setinodata', url: baseUrl + '/gate/rest/services/seti/setinodata/MapServer/', visible: true, title:'Сети без данных'},
+                        //{id:'setibuild', url: baseUrl + '/gate/rest/services/seti/setibuild/MapServer/', visible: true, title:'Строящиеся сети'},
+                        //{id:'setiothers', url: baseUrl + '/gate/rest/services/seti/setiothers/MapServer/', visible: true, title:'Сети сторонних организаций'},
+                        //{id:'setiold', url: baseUrl + '/gate/rest/services/seti/setiold/MapServer/', visible: true, title:'Ликвидированные сети'},
+                        //{id:'setiunfinished', url: baseUrl + '/gate/rest/services/seti/setiunfinished/MapServer/', visible: true, title:'Недооформленные сети'},
+                        //{id:'setiproject', url: baseUrl + '/gate/rest/services/seti/setiproject/MapServer/', visible: true, title:'Проектируемые сети'},
+                        //{id:'labels2', url: baseUrl + '/gate/rest/services/seti/labels2/MapServer/', visible: true, title: "Подписи", listMode: "hide"},
+                        // {id:'buildClouds', url: baseUrl + '/gate/rest/services/test/buildCloudsRL/MapServer/', visible: true, title: "Облака строительства", sublayers: [{id: 7}]},
+                        // {id:'projectsClouds', url: baseUrl + '/gate/rest/services/test/projectCloudsRL/MapServer/', visible: true, title: "Облака проектов", sublayers: [{id: 7}]}
+                    ];
+                
+                for (var i = operationlayers.length-1; i >= 0; i--) {
+                    var MapImgLayer = new MapImageLayer(operationlayers[i]);
+                    map.add(MapImgLayer);            
+                }
+
+                var view = new MapView({
+                    container: 'viewDiv',
+                    zoom: 0,
+                    map: map
+                });
+                var printTask = new PrintTask({
+                    url: "http://atlas.mvs.int/gate/rest/services/test/actRzgranPrint/GPServer/actPrint/"
+                });
+
+                var template = new PrintTemplate({
+                    format: "jpeg",
+                    exportOptions: {
+                        width : 800,
+                        height : 1100,
+                        dpi: 96
+                    },
+                    layout: "А4 портрет",
+                    outScale : 25000
+                });
+
+                var params = new PrintParameters({
+                    view: view,
+                    template: template
+                });
+
+                let printWidget = new PrintWidget({
+                    map : map,
+                    view : view,
+                    serviceUrl : "http://atlas.mvs.int/gate/rest/services/test/actRzgranPrint/GPServer/actPrint/"
+                })
+                view.ui.add(printWidget, "bottom-left")
+
+                var layerList = new LayerList({
+                    view: view
+                });
+                view.ui.add(layerList, "top-left");
+                // printTask.execute(params).then( (response) => {
+                //     console.log(response);
+                //     window.open(response.url);
+                // }, (error) => {
+                //     console.log(error);
+                // });
+
+                let open = document.getElementById("open");
+                open.onclick = () => {
+                    let loader = document.getElementById("loader");
+                    loader.style["display"] = "block";
+                    printTask.execute(params).then( (response) => {
+                        // console.log(response);
+                        document.location.href = response.url;
+                    }, (error) => {
+                        console.log(error);
+                    })
+                }
+
+                let button = document.getElementById("xml");
+                button.onclick = () => {
+                    let xmlUrl = "http://atlas.mvs.int/gate/rest/services/test/actRzgranPrint/GPServer/actPrint/json"
+                    let xml = new XMLHttpRequest();
+                    xml.open("GET", xmlUrl, false);
+                    xml.send;
+                    xml.responseText
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <div id='viewDiv'>
+            <div id="loader"></div>
+            <button id="open">Перейти к изображению</button>
+            <button id="xml">Запрос</button>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "arcgis-js-api-widgets-communication",
+  "version": "1.0.0",
+  "description": "arcgis js api commincation between widgets expariments",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexanderRyzhov/arcgis-js-api-widgets-communication.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlexanderRyzhov/arcgis-js-api-widgets-communication/issues"
+  },
+  "homepage": "https://github.com/AlexanderRyzhov/arcgis-js-api-widgets-communication#readme",
+  "dependencies": {
+    "@types/arcgis-js-api": "^4.14.0",
+    "bezier-easing": "^2.1.0"
+  },
+  "devDependencies": {
+    "dojo-typings": "^1.11.9"
+  }
+}

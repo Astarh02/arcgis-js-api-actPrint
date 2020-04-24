@@ -1,0 +1,52 @@
+    // let a:String = prompt("Подпись", "");
+            //     if (a == null) {
+            //         // inClass.click.remove();
+            //         document.getElementById(CSS.addSignature).click();
+            //         return;
+            //     } else if (a == "") {
+            //         inClass.signatureLayer.graphics.items.forEach(function(event:any) {
+            //             if (event.attributes["GlobalID"] == feature.attributes.GlobalID + " text") {
+            //                 inClass.signatureLayer.graphics.remove(event);
+            //             }
+            //         });
+            //         // inClass.click.remove();
+            //         document.getElementById(CSS.addSignature).click();
+            //         return;
+            //     } else {
+            //         var point = info.feature.geometry;
+            //         var textSymbol = {type: "text", color: "white", haloColor: "black", haloSize: "1px", text: a, xoffset: 0, yoffset: 8, font: {size: 12}};
+            //         var pointGraphic = new Graphic({geometry: point, symbol: textSymbol});
+            //         pointGraphic.attributes = {"GlobalID": info["feature"].attributes.GlobalID + " text"};
+            //         inClass.signatureLayer.graphics.add(pointGraphic);
+            //         // inClass.click.remove();
+            //         document.getElementById(CSS.addSignature).click();
+            //     }
+            // } else {
+            //     let a:String = prompt("Подпись", "");
+            //     if (a == null) {
+            //         // inClass.click.remove();
+            //         document.getElementById(CSS.addSignature).click();
+            //         return;
+            //     } else if (a == "") {
+            //         // inClass.click.remove();
+            //         inClass.signatureLayer.graphics.items.forEach(function(event:any) {
+            //             if (event.attributes["GlobalID"] == feature.attributes.GlobalID + " text") {
+            //                 inClass.signatureLayer.graphics.remove(event);
+            //             }
+            //         });
+            //         document.getElementById(CSS.addSignature).click();
+            //         return;
+            //     } else {
+            //         inClass.signatureLayer.graphics.items.forEach(function(event:any) {
+            //             if (event.attributes["GlobalID"] == feature.attributes.GlobalID + " text") {
+            //                 inClass.signatureLayer.graphics.remove(event);
+            //             }
+            //         });
+            //         var point = info.feature.geometry;
+            //         var textSymbol = {type: "text", color: "white", haloColor: "black", haloSize: "1px", text: a, xoffset: 0, yoffset: 8, font: {size: 12}};
+            //         var pointGraphic = new Graphic({geometry: point, symbol: textSymbol});
+            //         pointGraphic.attributes = {"GlobalID": info["feature"].attributes.GlobalID + " text"};
+            //         inClass.signatureLayer.graphics.add(pointGraphic);
+            //         // inClass.click.remove();
+            //         document.getElementById(CSS.addSignature).click();
+            //     }
