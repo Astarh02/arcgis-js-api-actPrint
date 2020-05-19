@@ -2,7 +2,7 @@
 /// <amd-dependency path = "esri/core/tsSupport/decorateHelper" name = "__decorate" />
 
 /// <amd-dependency path = "esri/views/2d/viewpointUtils" name = "viewpointUtils" />
-/// <amd-dependency path = "widgets/CircuitCreation/CircuitCreation" name = "CircuitCreation" />
+/// <amd-dependency path = "widgets/CircuitCreation" name = "CircuitCreation" />
 
 import { subclass, declared, property } from "esri/core/accessorSupport/decorators";
 
@@ -23,8 +23,6 @@ import Graphic from "esri/Graphic";
 import Extent from "esri/geometry/Extent";
 
 import Polygon from "esri/geometry/Polygon";
-
-import FillSymbol from "esri/symbols/FillSymbol"
 
 import Point from "esri/geometry/Point";
 
@@ -48,7 +46,7 @@ declare const CircuitCreation : any;
 const CSS = {
     base: "print-widget print-container esri-widget",
         headerTitle : "print-widget header-title",
-        selection : "print-widget layout-section",
+        section : "print-widget layout-section",
             pageName : "print-widget pageName",
             pageSettings : "print-widget pageSettings",
             countShtamp : "print-widget countShtamp",
@@ -56,13 +54,14 @@ const CSS = {
             scale : "print-widget scale",
             angleRotation_range : "print-widget angleRotation-range",
             angleRotation_number : "print-widget angleRotation-number",
+            addGraphics : "print-widget buttonAddGraphics",
         buttonExport : "print-widget buttonExport",
         listLinks : "print-widget list-links"
 
 }
 @subclass("esri.widgets.PrintWidget")
 class PrintWidget extends declared(Widget) {
-    defaultAngle : any = 0;
+    defaultAngle : number = 0;
     constructor() {
         super();
     }
@@ -99,13 +98,17 @@ class PrintWidget extends declared(Widget) {
     @renderable()
     @property()
     typeTopShtampList : any;
+    
+    @renderable()
+    @property()
+    scaleList : any;
 
     @renderable()
     @property()
-    angleRotationDubble : any = 0;
+    angleRotationDubble : number = 0;
 
     @property()
-    titlePageNow : any;
+    // titlePageNow : any;
     @property()
     pageSettingsNow : any;
     @property()
@@ -113,7 +116,7 @@ class PrintWidget extends declared(Widget) {
     @property()
     typeTopShtampNow : any;
     @property()
-    scaleNow : any = 25000;
+    scaleNow : number = 0;
 
     @property()
     @renderable()
@@ -141,15 +144,10 @@ class PrintWidget extends declared(Widget) {
     @property()
     circuitElements : any;
 
-    @renderable()
     @property()
-    elementWidget :any;
-
-    @property()
-    layoutTabSelected : any = !0;
+    layoutTabSelected : any = false;
 
     postInitialize() {
-        // watchUtils.once(this, "view.extent.center", () => this._ready());
         request(this.serviceUrl, {
             query: {
                 f: "json"
@@ -162,74 +160,74 @@ class PrintWidget extends declared(Widget) {
             this.pageSettingsList = this.paramsService["Layout_Template"].choiceList.map( (element:any, i:any) => {
                 if (i == 0) {
                     this.pageSettingsNow = element;
-                    return <option bind = {this} selected>{element}</option>
+                    return <option bind = {this} selected = {true}>{element}</option>
                 }
-                else {return <option bind = {this}>{element}</option>}
+                else {return <option bind = {this} selected = {false}>{element}</option>}
             });
             this.countShtampList = this.paramsService["count_shtamp"].choiceList.map( (element:any, i:any) => {
                 if (i == 0) {
                     this.countShtampNow = element;
-                    return <option bind = {this} selected>{element}</option>
+                    return <option bind = {this} selected = {true}>{element}</option>
                 }
-                else {return <option bind = {this}>{element}</option>}
+                else {return <option bind = {this} selected = {false}>{element}</option>}
             });
             this.typeTopShtampList = this.paramsService["top_shtamp"].choiceList.map( (element:any, i:any) => {
                 if (i == 0) {
                     this.typeTopShtampNow = element;
-                    return <option bind = {this} selected>{element}</option>
+                    return <option bind = {this} selected = {true}>{element}</option>
                 }
-                else {return <option bind = {this}>{element}</option>}
+                else {return <option bind = {this} selected = {false}>{element}</option>}
             })
         });
 
         this.graphicsLayer = new GraphicsLayer({
             id : "print",
             title : "Слой печати",
-            visible : true,
+            visible : false,
         });
         this.map.add(this.graphicsLayer);
-        
-        watchUtils.once(this, "view.extent.center", () => {
-            let centroid = this.view.extent.center;
-            let sizeY = (this.scaleNow/200) * 41.45;
-            let sizeX = (this.scaleNow/200) * 29;
-            
-            let fillSymbol = {type: "simple-fill", color: [0, 0, 0, 0], outline: {color: [0, 255, 0], width: 1}};
-    
-            let polygonGraphic = new Graphic({
-                geometry: new Polygon({
-                    rings: [
-                        [
-                            [centroid.x - sizeX, centroid.y + sizeY],
-                            [centroid.x + sizeX, centroid.y + sizeY],
-                            [centroid.x + sizeX, centroid.y - sizeY],
-                            [centroid.x - sizeX, centroid.y - sizeY],
-                            [centroid.x - sizeX, centroid.y + sizeY]
-                        ]
-                    ]
-                }),
-                symbol: fillSymbol
-            });
-            polygonGraphic.geometry.spatialReference = this.view.spatialReference;
-            this.graphicsLayer.graphics.add(polygonGraphic);
-        });
 
-        this.own([
-            this.handles.add([
-                this.view.on("drag", (e) => {
-                    let graphic = this.graphicsLayer.graphics.items[0];
-                    let point = new Point(this.view.toMap({x:e.x,y:e.y}));
-                    let contains = geometryEngine.contains(graphic.geometry, point);
-                    if (contains) {
-                        if (e.action == "start" || e.action == "end") {
-                            this._selectFrame(e);
-                        } else if (e.action == "update") {
-                            this._moveFrame(e);
-                        }
-                    }
-                })
-            ])
-        ])
+        // watchUtils.once(this.view, "center", () =>{
+        // let frameScale = Math.max(...this.scaleValues.filter( (v:any) => v < this.view.scale/10));
+        // this.scaleNow = frameScale;
+        // let centroid = this.view.extent.center;
+        // let sizeY = (frameScale/200) * 41.45;
+        // let sizeX = (frameScale/200) * 29;
+        // let fillSymbol = {type: "simple-fill", color: [0, 0, 0, 0], outline: {color: [0, 255, 0], width: 1}};
+        // let polygonGraphic = new Graphic({
+        //     geometry: new Polygon({
+        //         rings: (this.ringsPolygon) ? this.ringsPolygon : [
+        //             [
+        //                 [centroid.x - sizeX, centroid.y + sizeY],
+        //                 [centroid.x + sizeX, centroid.y + sizeY],
+        //                 [centroid.x + sizeX, centroid.y - sizeY],
+        //                 [centroid.x - sizeX, centroid.y - sizeY],
+        //                 [centroid.x - sizeX, centroid.y + sizeY]
+        //             ]
+        //         ]
+        //     }),
+        //     symbol: fillSymbol
+        // });
+        // polygonGraphic.geometry.spatialReference = this.view.spatialReference;
+        // this.graphicsLayer.graphics.add(polygonGraphic);
+        // })
+
+        // this.own([
+        //     this.handles.add([
+        //         this.view.on("drag", (e) => {
+        //             let graphic = this.graphicsLayer.graphics.items[0];
+        //             let point = new Point(this.view.toMap({x:e.x,y:e.y}));
+        //             let contains = geometryEngine.contains(graphic.geometry, point);
+        //             if (contains) {
+        //                 if (e.action == "start" || e.action == "end") {
+        //                     this._selectFrame(e);
+        //                 } else {
+        //                     this._moveFrame(e);
+        //                 }
+        //             }
+        //         })
+        //     ])
+        // ])
 
         this.circuitCreation = new CircuitCreation({
             listLinks: [
@@ -269,39 +267,42 @@ class PrintWidget extends declared(Widget) {
                     color: [0, 255, 0]
                 }
             ],
+            container : document.createElement("div"),
             map: this.map,
             view: this.view
         });
 
-        this.circuitElements = <div
-            bind = {this}
-        >
-            {this.circuitCreation.render()}
-        </div>
-
+        // this.circuitElements = <div
+        //     bind = {this}
+        // >
+        //     {this._renderWidget(this.circuitCreation.domNode)}
+        // </div>
+        console.log(document);
+        console.log(window);
     }
 
     render() {
-        const pageName = (
-            <div
-                bind = {this}
-                class = {"print-widget formation"}
-            >
-                <label
-                    bind = {this}
-                    class = {"print-widget labelFormation"}
-                >{"Название"}</label>
-                <input
-                    bind = {this}
-                    class = {CSS.pageName}
-                    placeholder = {"Название"}
-                    type = {"text"}
-                    oninput = { (event:any) => {
-                        this.titlePageNow = event.target.value;
-                    }}
-                ></input>
-            </div>
-        )
+        // const pageName = (
+        //     <div
+        //         bind = {this}
+        //         class = {"print-widget formation"}
+        //     >
+        //         <label
+        //             bind = {this}
+        //             class = {"print-widget labelFormation"}
+        //         >{"Название"}</label>
+        //         <input
+        //             bind = {this}
+        //             class = {CSS.pageName}
+        //             placeholder = {"Название"}
+        //             type = {"search"}
+        //             value = {this.titlePageNow}
+        //             oninput = { (event:any) => {
+        //                 this.titlePageNow = event.target.value;
+        //             }}
+        //         ></input>
+        //     </div>
+        // )
         const pageSettings = (
             <div
                 bind = {this}
@@ -314,16 +315,33 @@ class PrintWidget extends declared(Widget) {
                 <select
                     bind = {this}
                     class = {CSS.pageSettings}
+                    name = {this.pageSettingsList}
                     onchange = { (event:any) => {
                         this.pageSettingsNow = event.target.value;
-                        if (event.target.value == "А4 портрет") {
-                            this.angleRotationDubble = 0;
-                            this.rotate(this.angleRotationDubble);
-                        } else
-                        if (event.target.value == "А4 альбом") {
-                            this.angleRotationDubble = 90 || -90;
-                            this.rotate(this.angleRotationDubble);
-                        }
+                        // if (event.target.value == "А4 портрет") {
+                        //     // this.angleRotationDubble = 0;
+                        //     this.rotate(0);
+                        // } else
+                        // if (event.target.value == "А4 альбом") {
+                        //     // this.angleRotationDubble = 90 || -90;
+                        //     this.rotate(90);
+                        // }
+                        let value:any;
+                        if (event.target.value == "А4 портрет") {value = 0 + Number(this.defaultAngle)} else if (event.target.value == "А4 альбом") {value = 90 + Number(this.defaultAngle)}
+                        let graphic = this.graphicsLayer.graphics.items[0];
+                        var rotateAngle = -(value - this.defaultAngle);
+                        var cosAngle = Math.cos(rotateAngle*Math.PI/180), sinAngle = Math.sin(rotateAngle*Math.PI/180);
+                        graphic.geometry.rings[0] = graphic.geometry.rings[0].map(function(vertex:any){
+                            var dx = vertex[0] - graphic.geometry.centroid.x;
+                            var dy = vertex[1] - graphic.geometry.centroid.y;
+                            return [
+                                dx*cosAngle - dy*sinAngle + graphic.geometry.centroid.x,
+                                dx*sinAngle + dy*cosAngle + graphic.geometry.centroid.y
+                            ];
+                        });
+                        var frameGraphic = new Polygon({rings: graphic.geometry.rings});
+                        frameGraphic.spatialReference = this.view.spatialReference;
+                        this.graphicsLayer.graphics.items[0].geometry = frameGraphic;
                     }}
                 >
                     {this.pageSettingsList}
@@ -362,7 +380,7 @@ class PrintWidget extends declared(Widget) {
                 <select
                     bind = {this}
                     class = {CSS.typeTopShtamp}
-                    onchange = { (event:any) => {
+                    oninput = { (event:any) => {
                         this.typeTopShtampNow = event.target.value;
                     }}
                 >
@@ -383,12 +401,22 @@ class PrintWidget extends declared(Widget) {
                     bind = {this}
                     class = {CSS.scale}
                     type = {"number"}
-                    min = {"0"}
+                    min = {500}
+                    max = {256000}
+                    step = {500}
                     value = {this.scaleNow}
+                    list = {"scaleList"}
                     oninput = { (event:any) => {
                         this.scaleNow = event.target.value
+                        this._updateSizeGraphics();
                     }}
                 ></input>
+                <datalist
+                    bind = {this}
+                    id = {"scaleList"}
+                >
+                    {this.scaleList}
+                </datalist>
             </div>
         )
         const angleRotation = (
@@ -439,6 +467,18 @@ class PrintWidget extends declared(Widget) {
                 class = {CSS.headerTitle}
             >{"Экспорт"}</header>
         )
+        const addGraphics = (
+            <div
+                bind = {this}
+                class = {CSS.buttonExport}
+                onclick = { () => {
+                    this.scaleNow = this.view.scale/2;
+                    this._updateSizeGraphicsButton()
+                }}
+            >
+                {"Вписать рамку"}
+            </div>
+        )
         const tabLinks = (
             <div
                 bind = {this}
@@ -448,36 +488,41 @@ class PrintWidget extends declared(Widget) {
                     bind = {this}
                     class = {"print-widget tab-link-action"}
                     onclick = { (event : any) => {this._toggleLayoutPanel(event)}}
-                >{"Компоновка"}</button>
+                >{"Сети"}</button>
                 <button
                     bind = {this}
                     class = {"print-widget tab-link"}
                     onclick = { (event : any) => {this._toggleLayoutPanel(event)}}
-                >{"Сети"}</button>
+                >{"Компоновка"}</button>
             </div>
         )
-        this.printElements = <div
-            bind = {this}
-        >
-            {pageName}
-            {pageSettings}
-            {countShtamp}
-            {typeTopShtamp}
-            {scale}
-            {angleRotation}
-        </div>
-        const section = (
-            <section
+        const printElements = (
+            <div
                 bind = {this}
-                class = {CSS.selection}
-            >   
-                {this.elementWidget = this.layoutTabSelected ? this.printElements : this.circuitElements}
-                {/* {pageName}
+            >
+                {/* {pageName} */}
                 {pageSettings}
                 {countShtamp}
                 {typeTopShtamp}
                 {scale}
-                {angleRotation} */}
+                {angleRotation}
+                {addGraphics}
+            </div>
+        )
+        const circuitElements = (
+            <div
+                bind = {this}
+            >
+                {this._renderWidget(this.circuitCreation.domNode)}
+            </div>
+        )
+        const section = (
+            <section
+                bind = {this}
+                class = {CSS.section}
+            >   
+                {/* {this.layoutTabSelected ? printElements : circuitElements} */}
+                {!this.layoutTabSelected ? circuitElements : printElements}
             </section>
         )
         const buttonExport = (
@@ -515,6 +560,30 @@ class PrintWidget extends declared(Widget) {
         )
         return base;
     }
+    private _renderWidget(a:any) {
+        const content = a;
+
+        if (typeof content === "string") {
+        return <div innerHTML={content} />;
+        }
+
+        if (this.isWidget(content)) {
+        return content.render();
+        }
+
+        if (content instanceof HTMLElement) {
+        return <div bind={content} afterCreate={this._attachToNode} />;
+        }
+
+        return null;
+    }
+    private _attachToNode(this: HTMLElement, node: HTMLElement): void {
+        const content: HTMLElement = this;
+        node.appendChild(content);
+    }
+    private isWidget(a:any) {
+        return a && "function" === typeof a.render;
+    }
     private renderList() {
         if (this.listLinksResults.length == 0) {
             return <div
@@ -546,6 +615,18 @@ class PrintWidget extends declared(Widget) {
                             {link.title}
                         </span>
                     </a>
+                    {/* <a
+                        bind = {this}
+                        class = {"print-widget link-container--download"}
+                        href = {link.url}
+                        title = {"Загрузить"}
+                        download = {"download"}
+                    >
+                        <div
+                            bind = {this}
+                            class = {"print-widget link-download"}
+                        ></div>
+                    </a> */}
                 </div>
             });
         }
@@ -557,9 +638,73 @@ class PrintWidget extends declared(Widget) {
         event.target.className = "print-widget tab-link-action"
 
         if (event.target.innerText == "Компоновка") {
+            if (this.graphicsLayer.graphics.items.length == 0) {
+                this.addGraphic();
+            }
             this.layoutTabSelected = true
+            this.handles.add([
+                this.view.on("drag", (e) => {
+                    let graphic = this.graphicsLayer.graphics.items[0];
+                    let point = new Point(this.view.toMap({x:e.x,y:e.y}));
+                    let contains = geometryEngine.contains(graphic.geometry, point);
+                    if (contains && this.graphicsLayer.visible) {
+                        if (e.action == "start" || e.action == "end") {
+                            this._selectFrame(e);
+                        } else if (e.action == "update") {
+                            this._moveFrame(e);
+                        }
+                    }
+                })
+            ])
+            this.graphicsLayer.visible = true;
         } else if (event.target.innerText == "Сети") {
             this.layoutTabSelected = false
+            this.own([
+                this.handles.removeAll()
+            ])
+            this.graphicsLayer.visible = false;
+        }
+        // this._addGraphics(this.layoutTabSelected);
+    }
+    private addGraphic(a:any = 2) : Function {
+        // let frameScale = Math.max(...this.scaleValues.filter( (v:any) => v < this.view.scale/10));
+        let b = a;
+        let frameScale = this.view.scale/ b;
+        this.scaleNow = frameScale;
+        let centroid = this.view.extent.center;
+        let sizeY = (frameScale/200) * 41.45;
+        let sizeX = (frameScale/200) * 29;
+        let fillSymbol = {type: "simple-fill", color: [0, 0, 0, 0], outline: {color: [0, 255, 0], width: 1}};
+        let polygonGraphic = new Graphic({
+            geometry: new Polygon({
+                // rings: (this.ringsPolygon) ? this.ringsPolygon : [
+                rings: [
+                    [
+                        [centroid.x - sizeX, centroid.y + sizeY],
+                        [centroid.x + sizeX, centroid.y + sizeY],
+                        [centroid.x + sizeX, centroid.y - sizeY],
+                        [centroid.x - sizeX, centroid.y - sizeY],
+                        [centroid.x - sizeX, centroid.y + sizeY]
+                    ]
+                ]
+            }),
+            symbol: fillSymbol
+        });
+        polygonGraphic.geometry.spatialReference = this.view.spatialReference;
+        // this.graphicsLayer.graphics.add(polygonGraphic);
+        let array = polygonGraphic.geometry["rings"][0].map( (element:any) => {
+            let point : any = {
+                x : element[0],
+                y : element[1],
+                spatialReference : this.view.spatialReference
+            }
+            return this.view.toScreen(point);
+        });
+        console.log(array);
+        if (((array[1].y < 0) ? array[1].y * -1 : array[1].y) + ((array[2].y < 0) ? array[2].y * -1 : array[2].y) > window.screen.height || ((array[0].x < 0) ? array[0].x * -1 : array[0].x) + ((array[1].x < 0) ? array[1].x * -1 : array[1].x) > window.screen.width) {
+            return this.addGraphic(b + 0.5);
+        } else {
+            this.graphicsLayer.graphics.add(polygonGraphic);
         }
     }
     private _selectFrame(e:any) {
@@ -591,6 +736,90 @@ class PrintWidget extends declared(Widget) {
         frameGraphic.spatialReference = this.view.spatialReference;
         graphic.geometry = frameGraphic;
     }
+    private _updateSizeGraphics() {
+        let graphic = this.graphicsLayer.graphics.items[0];
+        let centroid = this.view.extent.center;
+        let sizeY = (this.scaleNow/200) * 41.45;
+        let sizeX = (this.scaleNow/200) * 29;
+        let frameGraphic = new Polygon({
+            rings: [
+                [
+                    [centroid.x - sizeX, centroid.y + sizeY],
+                    [centroid.x + sizeX, centroid.y + sizeY],
+                    [centroid.x + sizeX, centroid.y - sizeY],
+                    [centroid.x - sizeX, centroid.y - sizeY],
+                    [centroid.x - sizeX, centroid.y + sizeY]
+                ]
+            ]
+        })
+        frameGraphic.spatialReference = this.view.spatialReference;
+        // graphic.geometry = frameGraphic;
+        
+        var rotateAngle = -(this.defaultAngle);
+        var cosAngle = Math.cos(rotateAngle*Math.PI/180), sinAngle = Math.sin(rotateAngle*Math.PI/180);
+        graphic.geometry.rings[0] = graphic.geometry.rings[0].map(function(vertex:any){
+            var dx = vertex[0] - graphic.geometry.centroid.x;
+            var dy = vertex[1] - graphic.geometry.centroid.y;
+            return [
+                dx*cosAngle - dy*sinAngle + graphic.geometry.centroid.x,
+                dx*sinAngle + dy*cosAngle + graphic.geometry.centroid.y
+            ];
+        });
+        frameGraphic = new Polygon({rings: graphic.geometry.rings});
+		frameGraphic.spatialReference = this.view.spatialReference;
+        graphic.geometry = frameGraphic;
+    }
+    private _updateSizeGraphicsButton(a:any = 2) : Function {
+        let b = a;
+        let frameScale = Math.floor(this.view.scale/ b);
+        let graphic = this.graphicsLayer.graphics.items[0];
+        this.scaleNow = frameScale;
+        let centroid = this.view.extent.center;
+        let sizeY = (frameScale/200) * 41.45;
+        let sizeX = (frameScale/200) * 29;
+        let frameGraphic = new Polygon({
+            rings: [
+                [
+                    [centroid.x - sizeX, centroid.y + sizeY],
+                    [centroid.x + sizeX, centroid.y + sizeY],
+                    [centroid.x + sizeX, centroid.y - sizeY],
+                    [centroid.x - sizeX, centroid.y - sizeY],
+                    [centroid.x - sizeX, centroid.y + sizeY]
+                ]
+            ]
+        });
+        frameGraphic.spatialReference = this.view.spatialReference;
+        // graphic.geometry = frameGraphic;
+
+        var rotateAngle = -(this.defaultAngle);
+        var cosAngle = Math.cos(rotateAngle*Math.PI/180), sinAngle = Math.sin(rotateAngle*Math.PI/180);
+        frameGraphic.rings[0] = frameGraphic.rings[0].map(function(vertex:any){
+            var dx = vertex[0] - frameGraphic.centroid.x;
+            var dy = vertex[1] - frameGraphic.centroid.y;
+            return [
+                dx*cosAngle - dy*sinAngle + frameGraphic.centroid.x,
+                dx*sinAngle + dy*cosAngle + frameGraphic.centroid.y
+            ];
+        });
+        frameGraphic = new Polygon({rings: frameGraphic.rings});
+        frameGraphic.spatialReference = this.view.spatialReference;
+        // graphic.geometry = frameGraphic;
+
+        let array = frameGraphic["rings"][0].map( (element:any) => {
+            let point : any = {
+                x : element[0],
+                y : element[1],
+                spatialReference : this.view.spatialReference
+            }
+            return this.view.toScreen(point);
+        });
+
+        if (((array[1].y < 0) ? array[1].y * -1 : array[1].y) + ((array[2].y < 0) ? array[2].y * -1 : array[2].y) > window.screen.height || ((array[0].x < 0) ? array[0].x * -1 : array[0].x) + ((array[1].x < 0) ? array[1].x * -1 : array[1].x) > window.screen.width) {
+            return this._updateSizeGraphicsButton(b + 0.5);
+        } else {
+            graphic.geometry = frameGraphic;
+        }
+    }
     private _print() {
         var printTask = new PrintTask({
             url: this.serviceUrl
@@ -600,7 +829,8 @@ class PrintWidget extends declared(Widget) {
             layout: this.pageSettingsNow,
             outScale : this.scaleNow,
             layoutOptions : {
-                titleText : this.titlePageNow || "Без заголовка"
+                // titleText : this.titlePageNow || "Схема"
+                titleText : "Схема"
             }
         })
         printTemplate["countShtamp"] = this.countShtampNow;
@@ -625,7 +855,7 @@ class PrintWidget extends declared(Widget) {
         params["extent"] = viewPointUtils;
 
         let fullName;
-        if (printTemplate.layoutOptions.titleText == "Без заголовка") {
+        if (printTemplate.layoutOptions.titleText == "Схема") {
             fullName = `${printTemplate.layoutOptions.titleText}(${this.count}).${printTemplate.format}`;
             this.count++;
         } else {

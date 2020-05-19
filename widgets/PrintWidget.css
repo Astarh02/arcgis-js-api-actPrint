@@ -79,6 +79,24 @@
     margin: 0 0 12px 0;
     font-size: 14px;
 }
+.formationList {
+    position: absolute;
+    background: #fff;
+    width: 268px;
+    border: 1px solid #ccc;
+    display: none;
+    max-height: 100px;
+    height: 100px;
+    font-size: 12px;
+}
+.formationList > p {
+    margin: 0;
+    padding: 0 2px 1px;
+    transition: .2s;
+}
+.formationList > p:hover {
+    background-color: #ddd;
+}
 .pageName {
     padding: 0 5px;
     height: 32px;
@@ -89,6 +107,9 @@
     height: 32px;
     width: 100%;
     font-size: 14px;
+    background: inherit;
+    border: 1px solid #aaa;
+    text-align: inherit;
 }
 .countShtamp {
     padding: 0 5px;
@@ -145,6 +166,22 @@
     height: 32px;
     width: 100%;
     font-size: 14px;
+}
+.buttonAddGraphics {
+    display: block;
+    width: 100%;
+    height: 32px;
+    padding: 6px 7px;
+    margin: 12px 0;
+    border: 1px solid #bbb;
+    cursor: pointer;
+    font-size: 14px;
+}
+.buttonAddGraphics:hover {
+    background-color: #ddd;
+}
+.buttonAddGraphics:active {
+    background-color: #ccc;
 }
 .buttonExport {
     display: block;
@@ -233,4 +270,21 @@
     display: inline-block;
     height: 18px;
     padding: 2px 0;
+}
+/* ----- download */
+.link-container--download {
+    font-size: 12px;
+    width: 20px;
+    height: 100%;
+    display: block;
+    float: right;
+}
+.link-container--download > .link-download {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-image: url(icons/download.svg);
+    /* float: left; */
+    background-repeat: no-repeat;
+    /* margin: 0 5px; */
 }

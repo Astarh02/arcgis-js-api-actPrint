@@ -1,8 +1,5 @@
 /// <amd-dependency path="esri/core/tsSupport/declareExtendsHelper" name="__extends" />
 /// <amd-dependency path="esri/core/tsSupport/decorateHelper" name="__decorate" />
-
-//исправлено identify -> render -> isPositive -> добавлена проверка event.attribute
-
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -25,15 +22,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/core/tsSupport/decorateHelper", "esri/core/accessorSupport/decorators", "esri/widgets/Widget", "esri/widgets/support/widget", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/geometryEngineAsync", "esri/tasks/IdentifyTask", "esri/tasks/support/IdentifyParameters", "dojo/promise/all"], function (require, exports, __extends, __decorate, decorators_1, Widget_1, widget_1, GraphicsLayer_1, Graphic_1, geometryEngineAsync_1, IdentifyTask_1, IdentifyParameters_1, all_1) {
+define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/core/tsSupport/decorateHelper", "dojo/promise/all", "esri/core/accessorSupport/decorators", "esri/widgets/Widget", "esri/widgets/support/widget", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/Polygon", "esri/geometry/Polyline", "esri/geometry/Point", "esri/geometry/geometryEngineAsync", "esri/tasks/IdentifyTask", "esri/tasks/support/IdentifyParameters"], function (require, exports, __extends, __decorate, all, decorators_1, Widget_1, widget_1, GraphicsLayer_1, Graphic_1, Polygon_1, Polyline_1, Point_1, geometryEngineAsync_1, IdentifyTask_1, IdentifyParameters_1) {
     "use strict";
     Widget_1 = __importDefault(Widget_1);
     GraphicsLayer_1 = __importDefault(GraphicsLayer_1);
     Graphic_1 = __importDefault(Graphic_1);
+    Polygon_1 = __importDefault(Polygon_1);
+    Polyline_1 = __importDefault(Polyline_1);
+    Point_1 = __importDefault(Point_1);
     geometryEngineAsync_1 = __importDefault(geometryEngineAsync_1);
     IdentifyTask_1 = __importDefault(IdentifyTask_1);
     IdentifyParameters_1 = __importDefault(IdentifyParameters_1);
-    all_1 = __importDefault(all_1);
     var CSS = {
         base: "circuitCreation-tabs-list esri-widget",
         contentBar: "circuitCreation-content-bar",
@@ -98,37 +97,53 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             });
             this.map.add(this.signatureLayer);
             this.listLinks.forEach(function (element) {
-                inClass.indicateLayerLength[element["name"]] = 0;
+                inClass.indicateLayerLength[element["name"]] = {
+                    default: "Нет выбранных",
+                    custom: 0
+                };
             });
             this.addLinks();
         };
         CircuitCreation.prototype.open = function (event) {
+            this.arrayContent;
+            this.arrayLinks;
             if (event.target.className == CSS.tabLinks) {
-                var i, tabcontent, tablinks;
-                tabcontent = document.getElementsByClassName(CSS.tabContent);
-                for (i = 0; i < tabcontent.length; i++) {
-                    tabcontent[i]["style"].display = "none";
-                }
-                tablinks = document.getElementsByClassName(CSS.tabLinks);
-                for (i = 0; i < tablinks.length; i++) {
-                    tablinks[i].className = tablinks[i].className.replace(" active", "");
-                }
-                document.getElementById(event.target.id).style.display = "block";
-                event.currentTarget.className += " active";
+                this.arrayLinks.forEach(function (element) {
+                    (element["properties"].id == event.target.id) ? element["properties"].class = CSS.tabLinks + " active" : element["properties"].class = CSS.tabLinks;
+                    (element["properties"].id == event.target.id) ? element["domNode"].className = CSS.tabLinks + " active" : element["domNode"].className = CSS.tabLinks;
+                    // element["properties"].class = CSS.tabLinks;
+                });
+                this.arrayContent.forEach(function (panel) {
+                    (panel["properties"].id == event.target.id) ? panel["domNode"].style.display = "block" : panel["domNode"].style.display = "none";
+                    // panel["domNode"].style.display = "none";
+                });
             }
-            else if (event.target.className == CSS.tabLinks + " active") {
-                var i, tabcontent, tablinks;
-                tabcontent = document.getElementsByClassName(CSS.tabContent);
-                for (i = 0; i < tabcontent.length; i++) {
-                    tabcontent[i]["style"].display = "none";
-                }
-                tablinks = document.getElementsByClassName(CSS.tabLinks + " active");
-                for (i = 0; i < tablinks.length; i++) {
-                    tablinks[i].className = tablinks[i].className.replace(" active", "");
-                }
-                document.getElementById(event.target.id).style.display = "none";
-                event.currentTarget.className += "";
-            }
+            // if (event.target.className == CSS.tabLinks) {
+            //     var i, tabcontent, tablinks;
+            //     tabcontent = document.getElementsByClassName(CSS.tabContent);
+            //     for (i = 0; i < tabcontent.length; i++) {
+            //         tabcontent[i]["style"].display = "none";
+            //     }
+            //     tablinks = document.getElementsByClassName(CSS.tabLinks);
+            //     for (i = 0; i < tablinks.length; i++) {
+            //         tablinks[i].className = tablinks[i].className.replace(" active", "");
+            //     }
+            //     document.getElementById(event.target.id).style.display = "block";
+            //     event.currentTarget.className += " active";
+            // } else
+            // if (event.target.className == CSS.tabLinks + " active") {
+            //     var i, tabcontent, tablinks;
+            //     tabcontent = document.getElementsByClassName(CSS.tabContent);
+            //     for (i = 0; i < tabcontent.length; i++) {
+            //         tabcontent[i]["style"].display = "none";
+            //     }
+            //     tablinks = document.getElementsByClassName(CSS.tabLinks + " active");
+            //     for (i = 0; i < tablinks.length; i++) {
+            //         tablinks[i].className = tablinks[i].className.replace(" active", "");
+            //     }
+            //     document.getElementById(event.target.id).style.display = "none";
+            //     event.currentTarget.className += "";
+            // }
         };
         CircuitCreation.prototype.addGraphic = function (event, valueColor, name) {
             var inClass = this;
@@ -190,9 +205,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         inClass.CircuitLayer.graphics.remove(polygonGraphic);
                         var map = inClass.view.toMap({ x: pointer.x, y: pointer.y });
                         graphMove_1.push([map.x, map.y]);
-                        var polygon = { type: "polygon", rings: graphMove_1 };
+                        var polygon = { rings: graphMove_1 };
                         var fillSymbol = { type: "simple-fill", color: [valueColor[0], valueColor[1], valueColor[2], 0.3], outline: { color: [valueColor[0], valueColor[1], valueColor[2]], width: 0.5 } };
-                        polygonGraphic = new Graphic_1.default({ geometry: polygon, symbol: fillSymbol });
+                        polygonGraphic = new Graphic_1.default({ geometry: new Polygon_1.default(polygon), symbol: fillSymbol });
                         polygonGraphic.geometry.spatialReference = inClass.view.spatialReference;
                         inClass.CircuitLayer.graphics.add(polygonGraphic);
                         graphMove_1.splice(graphMove_1.length - 1, 1);
@@ -222,9 +237,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         var xmax = now.x;
                         var ymin = origin.y;
                         var ymax = now.y;
-                        var polygon = { type: "polygon", rings: [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax], [xmin, ymin]] };
+                        var polygon = { rings: [[[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax], [xmin, ymin]]] };
                         var fillSymbol = { type: "simple-fill", color: [valueColor[0], valueColor[1], valueColor[2], 0.3], outline: { color: [valueColor[0], valueColor[1], valueColor[2]], width: 0.5 } };
-                        rectangleGraphic = new Graphic_1.default({ geometry: polygon, symbol: fillSymbol });
+                        rectangleGraphic = new Graphic_1.default({ geometry: new Polygon_1.default(polygon), symbol: fillSymbol });
                         rectangleGraphic.geometry.spatialReference = inClass.view.spatialReference;
                         inClass.CircuitLayer.graphics.add(rectangleGraphic);
                         if (event.action == "end") {
@@ -247,9 +262,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         var ymax = now.y;
                         var a = [xmax, ymax];
                         rings.push(a);
-                        var polygon = { type: "polygon", rings: rings };
+                        var polygon = { rings: rings };
                         var fillSymbol = { type: "simple-fill", color: [valueColor[0], valueColor[1], valueColor[2], 0.3], outline: { color: [valueColor[0], valueColor[1], valueColor[2]], width: 0.5 } };
-                        blurGraphic = new Graphic_1.default({ geometry: polygon, symbol: fillSymbol });
+                        blurGraphic = new Graphic_1.default({ geometry: new Polygon_1.default(polygon), symbol: fillSymbol });
                         blurGraphic.geometry.spatialReference = inClass.view.spatialReference;
                         inClass.CircuitLayer.graphics.add(blurGraphic);
                         if (event.action == "end") {
@@ -323,9 +338,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         inClass.CircuitLayer.graphics.remove(polygonGraphic);
                         var map = inClass.view.toMap({ x: pointer.x, y: pointer.y });
                         graphMove_2.push([map.x, map.y]);
-                        var polygon = { type: "polygon", rings: graphMove_2 };
+                        var polygon = { rings: graphMove_2 };
                         var fillSymbol = { type: "simple-fill", color: [valueColor[0], valueColor[1], valueColor[2], 0.3], outline: { color: [valueColor[0], valueColor[1], valueColor[2]], width: 0.5 } };
-                        polygonGraphic = new Graphic_1.default({ geometry: polygon, symbol: fillSymbol });
+                        polygonGraphic = new Graphic_1.default({ geometry: new Polygon_1.default(polygon), symbol: fillSymbol });
                         polygonGraphic.geometry.spatialReference = inClass.view.spatialReference;
                         inClass.CircuitLayer.graphics.add(polygonGraphic);
                         graphMove_2.splice(graphMove_2.length - 1, 1);
@@ -355,9 +370,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         var xmax = now.x;
                         var ymin = origin.y;
                         var ymax = now.y;
-                        var polygon = { type: "polygon", rings: [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax], [xmin, ymin]] };
+                        var polygon = { rings: [[[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax], [xmin, ymin]]] };
                         var fillSymbol = { type: "simple-fill", color: [valueColor[0], valueColor[1], valueColor[2], 0.3], outline: { color: [valueColor[0], valueColor[1], valueColor[2]], width: 0.5 } };
-                        rectangleGraphic = new Graphic_1.default({ geometry: polygon, symbol: fillSymbol });
+                        rectangleGraphic = new Graphic_1.default({ geometry: new Polygon_1.default(polygon), symbol: fillSymbol });
                         rectangleGraphic.geometry.spatialReference = inClass.view.spatialReference;
                         inClass.CircuitLayer.graphics.add(rectangleGraphic);
                         if (event.action == "end") {
@@ -380,9 +395,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         var ymax = now.y;
                         var a = [xmax, ymax];
                         rings.push(a);
-                        var polygon = { type: "polygon", rings: rings };
+                        var polygon = { rings: rings };
                         var fillSymbol = { type: "simple-fill", color: [valueColor[0], valueColor[1], valueColor[2], 0.3], outline: { color: [valueColor[0], valueColor[1], valueColor[2]], width: 0.5 } };
-                        blurGraphic = new Graphic_1.default({ geometry: polygon, symbol: fillSymbol });
+                        blurGraphic = new Graphic_1.default({ geometry: new Polygon_1.default(polygon), symbol: fillSymbol });
                         blurGraphic.geometry.spatialReference = inClass.view.spatialReference;
                         inClass.CircuitLayer.graphics.add(blurGraphic);
                         if (event.action == "end") {
@@ -432,7 +447,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             for (var i = 0; i < tasks.length; i++) {
                 promises.push(tasks[i].execute(params));
             }
-            var allPromises = new all_1.default(promises);
+            var allPromises = new all(promises);
             if (action == "addPoint" || action == "addPolygon" || action == "addRectangle" || action == "addBlur") {
                 allPromises.then(render);
             }
@@ -455,9 +470,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                     inClass.CircuitLayer.graphics.add(polygonGraphic);
                 }
                 function polyline(feature) {
-                    var polyline = { type: "polyline", paths: feature.geometry.paths[0] };
+                    var polyline = { paths: feature.geometry.paths[0] };
                     var lineSymbol = { type: "simple-line", color: [color[0], color[1], color[2]], width: 2 };
-                    var polylineGraphic = new Graphic_1.default({ geometry: polyline, symbol: lineSymbol });
+                    var polylineGraphic = new Graphic_1.default({ geometry: new Polyline_1.default(polyline), symbol: lineSymbol });
                     polylineGraphic.geometry.spatialReference = feature.geometry.spatialReference;
                     polylineGraphic.attributes = { "GlobalID": feature.attributes.GlobalID, "tabID": name };
                     inClass.CircuitLayer.graphics.add(polylineGraphic);
@@ -471,9 +486,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         figure = "circle";
                     }
                     ;
-                    var point = { type: "point", longitude: feature.geometry.x, latitude: feature.geometry.y };
+                    var point = { longitude: feature.geometry.x, latitude: feature.geometry.y };
                     var markerSymbol = { type: "simple-marker", style: figure, color: [color[0], color[1], color[2]], outline: { color: [color[0], color[1], color[2]], width: 1 } };
-                    var pointGraphic = new Graphic_1.default({ geometry: point, symbol: markerSymbol });
+                    var pointGraphic = new Graphic_1.default({ geometry: new Point_1.default(point), symbol: markerSymbol });
                     pointGraphic.geometry.spatialReference = feature.geometry.spatialReference;
                     pointGraphic.attributes = { "GlobalID": feature.attributes.GlobalID, "tabID": name };
                     inClass.CircuitLayer.graphics.add(pointGraphic);
@@ -510,8 +525,8 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                     ;
                 });
                 var p_counter = document.getElementById(name + "_amount");
-                inClass.indicateLayerLength[name] = inClass.CircuitLayer.graphics.length;
-                p_counter.innerText = inClass.indicateLayerLength[name];
+                inClass.indicateLayerLength[name].custom = inClass.CircuitLayer.graphics.length;
+                p_counter.innerText = inClass.indicateLayerLength[name].custom;
             }
             function remove() {
                 inClass.CircuitLayer.graphics.items.forEach(function (element) {
@@ -524,8 +539,14 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                             if (element.attributes.tabID == name) {
                                 inClass.CircuitLayer.graphics.remove(element);
                                 var p_counter = document.getElementById(name + "_amount");
-                                inClass.indicateLayerLength[name] = inClass.CircuitLayer.graphics.length;
-                                p_counter.innerText = inClass.indicateLayerLength[name];
+                                inClass.indicateLayerLength[name].custom = inClass.CircuitLayer.graphics.length;
+                                p_counter.innerText = inClass.indicateLayerLength[name].custom;
+                                if (inClass.indicateLayerLength[name].custom == 0) {
+                                    p_counter.innerText = inClass.indicateLayerLength[name].default;
+                                }
+                                else {
+                                    p_counter.innerText = inClass.indicateLayerLength[name].custom;
+                                }
                             }
                         }
                     }
@@ -596,7 +617,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 params.geometry = event.mapPoint;
                 params.mapExtent = inClass.view.extent;
                 var layers = inClass.map.layers["items"].filter(function (layer) {
-                    return layer.getImageUrl && layer.visible && layer.id != "labels2";
+                    return layer.type == "map-image" && layer.visible && layer.id != "labels2";
                 });
                 var tasks = layers.map(function (layer) {
                     var task = new IdentifyTask_1.default(layer.url);
@@ -606,7 +627,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 for (var i_1 = 0; i_1 < tasks.length; i_1++) {
                     promises.push(tasks[i_1].execute(params));
                 }
-                var allPromises = new all_1.default(promises);
+                var allPromises = new all(promises);
                 allPromises.then(graphics);
             }
             ;
@@ -619,9 +640,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         }
                     });
                 }
-                var point = { type: "point", longitude: result["feature"].geometry.x, latitude: result["feature"].geometry.y };
+                var point = { longitude: result["feature"].geometry.x, latitude: result["feature"].geometry.y };
                 var markerSymbol = { type: "simple-marker", color: [176, 224, 230, 0.6], outline: { color: [0, 255, 255], width: 1.5 } };
-                var pointGraphic = new Graphic_1.default({ geometry: point, symbol: markerSymbol });
+                var pointGraphic = new Graphic_1.default({ geometry: new Point_1.default(point), symbol: markerSymbol });
                 pointGraphic.geometry.spatialReference = result["feature"].geometry.spatialReference;
                 pointGraphic.attributes = { "GlobalID": result["feature"].attributes.GlobalID + " sign" };
                 inClass.signatureLayer.graphics.add(pointGraphic);
@@ -695,12 +716,12 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         };
         CircuitCreation.prototype.addLinks = function () {
             var inClass = this;
-            inClass.listLinks.forEach(function (parameters) {
-                var link = widget_1.tsx("button", { bind: inClass, class: CSS.tabLinks, id: parameters["name"], onclick: function () { inClass.open(event); } },
+            inClass.listLinks.forEach(function (parameters, i) {
+                var link = widget_1.tsx("button", { bind: inClass, class: (i == 0) ? CSS.tabLinks + ' active' : CSS.tabLinks, id: parameters["name"], onclick: function () { inClass.open(event); } },
                     widget_1.tsx("p", { bind: inClass, class: CSS.span, style: "background: " + parameters["name"] }),
                     widget_1.tsx("p", { bind: inClass, class: CSS.title, id: parameters["name"] }));
                 inClass.arrayLinks.push(link);
-                var content = widget_1.tsx("div", { bind: inClass, class: CSS.tabContent, id: parameters["name"] },
+                var content = widget_1.tsx("div", { bind: inClass, class: CSS.tabContent, style: (i == 0) ? "display:block;" : "display:none;", id: parameters["name"] },
                     widget_1.tsx("p", null, "\u0418\u043C\u044F \u0441\u043B\u043E\u044F:"),
                     widget_1.tsx("input", { bind: inClass, class: CSS.input, type: "text", onchange: function (event) { this.updateTitleLayer(parameters["name"], event); } }),
                     widget_1.tsx("fieldset", { bind: inClass, class: CSS.fieldSet },
@@ -715,7 +736,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         widget_1.tsx("div", { bind: inClass, class: CSS.sketch, id: "removeRectangle", style: "background: url(sketch_rectangle.png) no-repeat; background-position: center;", title: "Нажмите, чтобы начать, и отпустите чтобы завершить", onclick: function () { inClass.removeGraphic(event, parameters["color"], parameters["name"]); } }),
                         widget_1.tsx("div", { bind: inClass, class: CSS.sketch, id: "removePolygon", style: "background: url(sketch_polygon.png) no-repeat; background-position: center;", title: "Щелкните, чтобы начать рисовать - Дважды щелкните, для завершения", onclick: function () { inClass.removeGraphic(event, parameters["color"], parameters["name"]); } }),
                         widget_1.tsx("div", { bind: inClass, class: CSS.sketch, id: "removeBlur", style: "background: url(sketch_blur.png) no-repeat; background-position: center;", title: "Нажмите, чтобы начать, и отпустите чтобы завершить", onclick: function () { inClass.removeGraphic(event, parameters["color"], parameters["name"]); } })),
-                    widget_1.tsx("p", { class: CSS.elements, id: parameters["name"] + "_amount" }, inClass.indicateLayerLength[parameters["name"]]));
+                    widget_1.tsx("p", { class: CSS.elements, id: parameters["name"] + "_amount" }, (inClass.indicateLayerLength[parameters["name"]].custom == 0) ? inClass.indicateLayerLength[parameters["name"]].default : inClass.indicateLayerLength[parameters["name"]].custom));
                 inClass.arrayContent.push(content);
             });
         };
