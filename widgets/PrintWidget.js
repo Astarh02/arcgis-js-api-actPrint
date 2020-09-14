@@ -56,8 +56,12 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         function PrintWidget() {
             var _this = _super.call(this) || this;
             _this.defaultAngle = 0;
+            _this.orientation = 0;
             _this.handles = new Handles_1.default();
             _this.paramsService = {};
+            _this.pageSettingsList = [];
+            _this.countShtampList = [];
+            _this.typeTopShtampList = [];
             _this.angleRotationDubble = 0;
             _this.scaleNow = 0;
             _this.listLinksResults = [];
@@ -65,6 +69,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             _this.count = 0;
             _this.countElement = 0;
             _this.layoutTabSelected = false;
+            _this.layersException = [];
             return _this;
         }
         PrintWidget.prototype.postInitialize = function () {
@@ -78,32 +83,30 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 response.data.parameters.forEach(function (object) {
                     _this.paramsService[object.name] = object;
                 });
+                // this.pageSettingsList = this.paramsService["Layout_Template"].choiceList.map( (element:any, i:any) => {
+                //     if (i == 0) {
+                //         this.pageSettingsNow = element;
+                //         return <option bind = {this} key = {i} selected = {true}>{element}</option>
+                //     }
+                //     else {return <option bind = {this} key = {i} selected = {false}>{element}</option>}
+                // });
                 _this.pageSettingsList = _this.paramsService["Layout_Template"].choiceList.map(function (element, i) {
                     if (i == 0) {
                         _this.pageSettingsNow = element;
-                        return widget_1.tsx("option", { bind: _this, selected: true }, element);
                     }
-                    else {
-                        return widget_1.tsx("option", { bind: _this, selected: false }, element);
-                    }
+                    return element;
                 });
                 _this.countShtampList = _this.paramsService["count_shtamp"].choiceList.map(function (element, i) {
                     if (i == 0) {
                         _this.countShtampNow = element;
-                        return widget_1.tsx("option", { bind: _this, selected: true }, element);
                     }
-                    else {
-                        return widget_1.tsx("option", { bind: _this, selected: false }, element);
-                    }
+                    return element;
                 });
                 _this.typeTopShtampList = _this.paramsService["top_shtamp"].choiceList.map(function (element, i) {
                     if (i == 0) {
                         _this.typeTopShtampNow = element;
-                        return widget_1.tsx("option", { bind: _this, selected: true }, element);
                     }
-                    else {
-                        return widget_1.tsx("option", { bind: _this, selected: false }, element);
-                    }
+                    return element;
                 });
             });
             this.graphicsLayer = new GraphicsLayer_1.default({
@@ -153,7 +156,13 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             //     ])
             // ])
             this.circuitCreation = new CircuitCreation({
+                layersException: this.layersException,
                 listLinks: [
+                    {
+                        name: "Blue",
+                        alias: "Синий",
+                        color: [0, 0, 255]
+                    },
                     {
                         name: "Purple",
                         alias: "Фиолетовый",
@@ -194,13 +203,6 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 map: this.map,
                 view: this.view
             });
-            // this.circuitElements = <div
-            //     bind = {this}
-            // >
-            //     {this._renderWidget(this.circuitCreation.domNode)}
-            // </div>
-            console.log(document);
-            console.log(window);
         };
         PrintWidget.prototype.render = function () {
             var _this = this;
@@ -229,17 +231,10 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 widget_1.tsx("label", { bind: this, class: "print-widget labelFormation" }, "Параметры страницы"),
                 widget_1.tsx("select", { bind: this, class: CSS.pageSettings, name: this.pageSettingsList, onchange: function (event) {
                         _this.pageSettingsNow = event.target.value;
-                        // if (event.target.value == "А4 портрет") {
-                        //     // this.angleRotationDubble = 0;
-                        //     this.rotate(0);
-                        // } else
-                        // if (event.target.value == "А4 альбом") {
-                        //     // this.angleRotationDubble = 90 || -90;
-                        //     this.rotate(90);
-                        // }
+                        _this.orientation = _this.pageSettingsNow == "А4 портрет" ? 0 : 90;
                         var value;
                         if (event.target.value == "А4 портрет") {
-                            value = 0 + Number(_this.defaultAngle);
+                            value = -90 + Number(_this.defaultAngle);
                         }
                         else if (event.target.value == "А4 альбом") {
                             value = 90 + Number(_this.defaultAngle);
@@ -258,17 +253,29 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         var frameGraphic = new Polygon_1.default({ rings: graphic.geometry.rings });
                         frameGraphic.spatialReference = _this.view.spatialReference;
                         _this.graphicsLayer.graphics.items[0].geometry = frameGraphic;
-                    } }, this.pageSettingsList)));
+                    } }, this.pageSettingsList.length > 0
+                    ? this.pageSettingsList.map(function (element, i) {
+                        return widget_1.tsx("option", { bind: _this, key: i, selected: element === _this.pageSettingsNow }, element);
+                    })
+                    : widget_1.tsx("option", { bind: this, key: 0, selected: true, disable: true }, "Ошибка параметров страницы"))));
             var countShtamp = (widget_1.tsx("div", { bind: this, class: "print-widget formation" },
                 widget_1.tsx("label", { bind: this, class: "print-widget labelFormation" }, "Количество подписантов"),
                 widget_1.tsx("select", { bind: this, class: CSS.countShtamp, onchange: function (event) {
                         _this.countShtampNow = event.target.value;
-                    } }, this.countShtampList)));
+                    } }, this.countShtampList.length > 0
+                    ? this.countShtampList.map(function (element, i) {
+                        return widget_1.tsx("option", { bind: _this, key: i, selected: element === _this.countShtampNow }, element);
+                    })
+                    : widget_1.tsx("option", { bind: this, key: 0, selected: true, disable: true }, "Ошибка количества подписантов"))));
             var typeTopShtamp = (widget_1.tsx("div", { bind: this, class: "print-widget formation" },
                 widget_1.tsx("label", { bind: this, class: "print-widget labelFormation" }, "Тип верхнего штампа"),
                 widget_1.tsx("select", { bind: this, class: CSS.typeTopShtamp, oninput: function (event) {
                         _this.typeTopShtampNow = event.target.value;
-                    } }, this.typeTopShtampList)));
+                    } }, this.typeTopShtampList.length > 0
+                    ? this.typeTopShtampList.map(function (element, i) {
+                        return widget_1.tsx("option", { bind: _this, key: i, selected: element === _this.typeTopShtampNow }, element);
+                    })
+                    : widget_1.tsx("option", { bind: this, key: 0, selected: true, disable: true }, "Ошибка верхнего штампа"))));
             var scale = (widget_1.tsx("div", { bind: this, class: "print-widget formation" },
                 widget_1.tsx("label", { bind: this, class: "print-widget labelFormation" }, "Установить масштаб"),
                 widget_1.tsx("input", { bind: this, class: CSS.scale, type: "number", min: 500, max: 256000, step: 500, value: this.scaleNow, list: "scaleList", oninput: function (event) {
@@ -367,12 +374,11 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                         var point = new Point_1.default(_this.view.toMap({ x: e.x, y: e.y }));
                         var contains = geometryEngine_1.default.contains(graphic.geometry, point);
                         if (contains && _this.graphicsLayer.visible) {
-                            if (e.action == "start" || e.action == "end") {
-                                _this._selectFrame(e);
-                            }
-                            else if (e.action == "update") {
-                                _this._moveFrame(e);
-                            }
+                            // if (e.action == "start" || e.action == "end") {
+                            //     this._selectFrame(e);
+                            // } else if (e.action == "update") {
+                            //     this._moveFrame(e);
+                            // }
                         }
                     })
                 ]);
@@ -390,9 +396,8 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         PrintWidget.prototype.addGraphic = function (a) {
             var _this = this;
             if (a === void 0) { a = 2; }
-            // let frameScale = Math.max(...this.scaleValues.filter( (v:any) => v < this.view.scale/10));
             var b = a;
-            var frameScale = this.view.scale / b;
+            var frameScale = Math.floor(Math.floor(this.view.scale / b) / 100) * 100;
             this.scaleNow = frameScale;
             var centroid = this.view.extent.center;
             var sizeY = (frameScale / 200) * 41.45;
@@ -400,7 +405,6 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             var fillSymbol = { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: [0, 255, 0], width: 1 } };
             var polygonGraphic = new Graphic_1.default({
                 geometry: new Polygon_1.default({
-                    // rings: (this.ringsPolygon) ? this.ringsPolygon : [
                     rings: [
                         [
                             [centroid.x - sizeX, centroid.y + sizeY],
@@ -423,9 +427,10 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 };
                 return _this.view.toScreen(point);
             });
-            console.log(array);
-            if (((array[1].y < 0) ? array[1].y * -1 : array[1].y) + ((array[2].y < 0) ? array[2].y * -1 : array[2].y) > window.screen.height || ((array[0].x < 0) ? array[0].x * -1 : array[0].x) + ((array[1].x < 0) ? array[1].x * -1 : array[1].x) > window.screen.width) {
-                return this.addGraphic(b + 0.5);
+            var height = ((array[1].y < 0) ? array[1].y * -1 : array[1].y) + ((array[2].y < 0) ? array[2].y * -1 : array[2].y);
+            var width = ((array[0].x < 0) ? array[0].x * -1 : array[0].x) + ((array[1].x < 0) ? array[1].x * -1 : array[1].x);
+            if (Math.floor(height) > window.screen.height || Math.floor(width) > window.screen.width) {
+                return this.addGraphic(b + 1);
             }
             else {
                 this.graphicsLayer.graphics.add(polygonGraphic);
@@ -478,8 +483,8 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 ]
             });
             frameGraphic.spatialReference = this.view.spatialReference;
-            // graphic.geometry = frameGraphic;
-            var rotateAngle = -(this.defaultAngle);
+            graphic.geometry = frameGraphic;
+            var rotateAngle = -(Number(this.defaultAngle) + this.orientation);
             var cosAngle = Math.cos(rotateAngle * Math.PI / 180), sinAngle = Math.sin(rotateAngle * Math.PI / 180);
             graphic.geometry.rings[0] = graphic.geometry.rings[0].map(function (vertex) {
                 var dx = vertex[0] - graphic.geometry.centroid.x;
@@ -497,7 +502,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             var _this = this;
             if (a === void 0) { a = 2; }
             var b = a;
-            var frameScale = Math.floor(this.view.scale / b);
+            var frameScale = Math.floor((this.view.scale / b) / 100) * 100;
             var graphic = this.graphicsLayer.graphics.items[0];
             this.scaleNow = frameScale;
             var centroid = this.view.extent.center;
@@ -515,20 +520,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 ]
             });
             frameGraphic.spatialReference = this.view.spatialReference;
-            // graphic.geometry = frameGraphic;
-            var rotateAngle = -(this.defaultAngle);
-            var cosAngle = Math.cos(rotateAngle * Math.PI / 180), sinAngle = Math.sin(rotateAngle * Math.PI / 180);
-            frameGraphic.rings[0] = frameGraphic.rings[0].map(function (vertex) {
-                var dx = vertex[0] - frameGraphic.centroid.x;
-                var dy = vertex[1] - frameGraphic.centroid.y;
-                return [
-                    dx * cosAngle - dy * sinAngle + frameGraphic.centroid.x,
-                    dx * sinAngle + dy * cosAngle + frameGraphic.centroid.y
-                ];
-            });
-            frameGraphic = new Polygon_1.default({ rings: frameGraphic.rings });
-            frameGraphic.spatialReference = this.view.spatialReference;
-            // graphic.geometry = frameGraphic;
+            graphic.geometry = frameGraphic;
             var array = frameGraphic["rings"][0].map(function (element) {
                 var point = {
                     x: element[0],
@@ -537,10 +529,24 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                 };
                 return _this.view.toScreen(point);
             });
-            if (((array[1].y < 0) ? array[1].y * -1 : array[1].y) + ((array[2].y < 0) ? array[2].y * -1 : array[2].y) > window.screen.height || ((array[0].x < 0) ? array[0].x * -1 : array[0].x) + ((array[1].x < 0) ? array[1].x * -1 : array[1].x) > window.screen.width) {
-                return this._updateSizeGraphicsButton(b + 0.5);
+            var height = ((array[1].y < 0) ? array[1].y * -1 : array[1].y) + ((array[2].y < 0) ? array[2].y * -1 : array[2].y);
+            var width = ((array[0].x < 0) ? array[0].x * -1 : array[0].x) + ((array[1].x < 0) ? array[1].x * -1 : array[1].x);
+            if (Math.floor(height) > window.screen.height || Math.floor(width) > window.screen.width) {
+                return this._updateSizeGraphicsButton(b + 1);
             }
             else {
+                var rotateAngle = -(Number(this.defaultAngle) + this.orientation);
+                var cosAngle = Math.cos(rotateAngle * Math.PI / 180), sinAngle = Math.sin(rotateAngle * Math.PI / 180);
+                frameGraphic.rings[0] = frameGraphic.rings[0].map(function (vertex) {
+                    var dx = vertex[0] - frameGraphic.centroid.x;
+                    var dy = vertex[1] - frameGraphic.centroid.y;
+                    return [
+                        dx * cosAngle - dy * sinAngle + frameGraphic.centroid.x,
+                        dx * sinAngle + dy * cosAngle + frameGraphic.centroid.y
+                    ];
+                });
+                frameGraphic = new Polygon_1.default({ rings: frameGraphic.rings });
+                frameGraphic.spatialReference = this.view.spatialReference;
                 graphic.geometry = frameGraphic;
             }
         };
@@ -707,6 +713,9 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         __decorate([
             decorators_1.property()
         ], PrintWidget.prototype, "layoutTabSelected", void 0);
+        __decorate([
+            decorators_1.property()
+        ], PrintWidget.prototype, "layersException", void 0);
         PrintWidget = __decorate([
             decorators_1.subclass("esri.widgets.PrintWidget")
         ], PrintWidget);

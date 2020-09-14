@@ -90,7 +90,7 @@ button#addLinks {
 }
 .circuitCreation-tabs {
     position: relative;
-    height: 287px;
+    /* height: 287px; */
     width: 90px;
     /* overflow-y: auto; */
     border: 1px solid #ccc;

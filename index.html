@@ -4,39 +4,52 @@
         <meta charset='utf-8'>
         <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'>
 
-        <title>Print Task</title>
+        <title>Акты ОТНИП - 1.0</title>
 
         <style>
             html,
             body,
-            #viewDiv {
+           .page {
                 width: 100%;
                 height: 100%;
                 margin: 0;
             }
-            #loader {
-                background-image: url(loader.svg);
-                background-position: center;
-                background-repeat: no-repeat;
-                display: none;
-                position: absolute;
-                height: 100%;
+
+            .wrapper {
+                margin: 0 auto;
+                position: relative;
                 width: 100%;
-                top: 0px;
-                left: 0px;
-                z-index: 2;
+                height: 100%;
+                /*
+                padding: 0 20px;
+                max-width: 1160px;
+                min-height: 600px;
+                */
             }
-            #open {
-                display: block;
-                position: absolute;
-                right: 10px;
-                top: 10px;
+
+            .content-wrapper {
+                float: left;
+                width: 100%;
+                height: 100%;
             }
-            #xml {
-                display: block;
-                position: absolute;
-                right: 10px;
-                top: 40px;
+            .content {
+                margin-right: 300px !important;
+                clear: both;
+                overflow: auto;
+                height: 100%;
+                /*
+                min-height: 600px;
+                */
+            }
+
+            .sidebar {
+                position: relative;
+                width: 310px;
+                margin-left: -310px;
+                float: right;
+                overflow: hidden;
+                min-height: 100%;
+                border-left: 1px solid #ddd;
             }
         </style>
         <script>
@@ -52,8 +65,11 @@
         </script>
         <link rel="stylesheet" href="widgets/CircuitCreation.css">
         <link rel="stylesheet" href="widgets/PrintWidget.css">
-        <link rel="stylesheet" href="/arcgis_js_api/library/4.13/esri/themes/light/main.css">
-        <script src='https://js.arcgis.com/4.14/'></script>
+        <!-- <link rel="stylesheet" href="../arcgis_js_api/library/4.13/esri/themes/light/main.css">
+        <script src='../arcgis_js_api/library/4.13/dojo/dojo.js'></script> -->
+        <link rel="stylesheet" href="https://js.arcgis.com/4.13/esri/themes/light/main.css" />
+        <!-- <script src="https://js.arcgis.com/4.13/"></script> -->
+        <script src='../arcgis_js_api/library/4.13/dojo/dojo.js'></script> 
         <script>
             require([
                 'esri/Map',
@@ -61,13 +77,12 @@
                 "esri/Basemap",
                 "esri/layers/TileLayer",
                 "esri/layers/MapImageLayer",
-                "esri/tasks/PrintTask",
-                "esri/tasks/support/PrintParameters",
-                "esri/tasks/support/PrintTemplate",
                 "esri/widgets/LayerList",
+                "esri/widgets/Expand",
                 "esri/config",
 
                 "widgets/PrintWidget",
+                "widgets/CircuitCreation",
                 'dojo/domReady!'
             ], function(
                 Map,
@@ -75,13 +90,12 @@
                 Basemap,
                 TileLayer,
                 MapImageLayer,
-                PrintTask,
-                PrintParameters,
-                PrintTemplate,
                 LayerList,
+                Expand,
                 esriConfig,
 
                 PrintWidget,
+                CircuitCreation,
             ) {
                 esriConfig.request.trustedServers.push("http://atlas.mvs.int");
                 
@@ -94,8 +108,8 @@
                 });
 
                 var map = new Map({ basemap: EGKO_BaseMap });
-                // var baseUrl = "http://atlas.mvs.int";
-                let baseUrl = "http://" + location.hostname;
+                var baseUrl = "http://atlas.mvs.int";
+                //let baseUrl = "http://" + location.hostname;
 
                 var operationlayers = 
                     [
@@ -119,25 +133,44 @@
                     zoom: 0,
                     map: map
                 });
-                var printTask = new PrintTask({
-                    url: "http://atlas.mvs.int/gate/rest/services/test/actRzgranPrint/GPServer/actPrint/"
-                });
 
                 let printWidget = new PrintWidget({
+                    container: "sidebar",
                     map : map,
                     view : view,
-                    serviceUrl : "http://atlas.mvs.int/gate/rest/services/test/actRzgranPrint/GPServer/actPrint/"
+                    serviceUrl : "http://atlas.mvs.int/gate/rest/services/test/actRzgranPrint/GPServer/actPrint/",
+                    layersException : [
+                        "setimvs"
+                    ]
                 })
-                view.ui.add(printWidget, "bottom-right")
+                //view.ui.add(printWidget, "bottom-right")
 
                 var layerList = new LayerList({
                     view: view
                 });
-                view.ui.add(layerList, "top-left");
+                // view.ui.add(layerList, "bottom-left");
+
+                layerListExpand = new Expand({
+                    expandIconClass: "esri-icon-layer-list",
+                    view: view,
+                    content: layerList
+                });
+                view.ui.add(layerListExpand, "bottom-left");
             });
         </script>
     </head>
     <body>
-        <div id='viewDiv'></div>
+
+        <div class="page">
+            <div class="wrapper">
+              <div class="content-wrapper">
+                <div id='viewDiv' class="content">
+                </div>
+              </div>
+              <div id="sidebar" class="sidebar esri-widget">
+              </div>
+            </div>
+          </div>
+
     </body>
 </html>
